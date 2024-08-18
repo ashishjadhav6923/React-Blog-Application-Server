@@ -45,7 +45,7 @@ const UsersInfo = mongoose.model("UsersInfo", usersInfoSchema);
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
-
+app.use(express.static('dist'));
 app.get("/api", (req, res) => {
   res.send({ message: "this is api" });
 });
