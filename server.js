@@ -11,41 +11,15 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("Could not connect to MongoDB", err));
 
-const userSchema = new mongoose.Schema(
-  {
-    username: { type: String, required: true },
-    password: { type: String, required: true },
-  },
-  { collection: "usersData" }
-);
-const usersInfoSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    username: { type: String, required: true, unique: true },
-    profession: { type: String, required: true },
-    img: { type: String }, // Store the URL or path to the image
-    blogs: [{ type: String }], // Array of blog IDs
-  },
-  { collection: "usersInfo" }
-);
-const postSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    title: { type: String, required: true },
-    author: { type: String, required: true },
-    profile: { type: String, required: true },
-    content: { type: String, required: true },
-    additionalInfo: { type: String },
-  },
-  { collection: "posts" }
-);
-const User = mongoose.model("usersData", userSchema);
-const Post = mongoose.model("posts", postSchema);
-const UsersInfo = mongoose.model("UsersInfo", usersInfoSchema);
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static('dist'));
+
+import {User} from "./models/userAuth.model.js";
+import {Post} from "./models/blogPost.model.js";
+import {UsersInfo} from "./models/userInfo.model.js";
+
 app.get("/api", (req, res) => {
   res.send({ message: "this is api" });
 });
