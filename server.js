@@ -14,18 +14,18 @@ mongoose
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
-app.use(express.static('dist'));
+app.use(express.static("dist"));
 
-import {User} from "./models/userAuth.model.js";
-import {Post} from "./models/blogPost.model.js";
-import {UsersInfo} from "./models/userInfo.model.js";
+// Import new schemas
+import User from "./models/user.model.js"; // User schema
+import Blog from "./models/blog.model.js"; // Blog schema
 
 app.get("/api", (req, res) => {
   res.send({ message: "this is api" });
 });
 
 app.post("/api/register", async (req, res) => {
-  const { username, password, name, profession } = req.body;
+  const { username, password, name, profession, email } = req.body;
 
   try {
     // Check if the user already exists
@@ -36,18 +36,8 @@ app.post("/api/register", async (req, res) => {
     }
 
     // Create a new user in the User collection
-    const newUser = new User({ username, password });
+    const newUser = new User({ username, password, name, profession,email });
     await newUser.save();
-
-    // Create a new user info in the usersInfo collection
-    const newUserInfo = new UsersInfo({
-      name,
-      username,
-      profession,
-      img: "", // Initialize img as an empty string (can be updated later)
-      blogs: [], // Initialize blogs as an empty array (can be updated later)
-    });
-    await newUserInfo.save();
 
     res.status(201).send({ message: "User registered successfully" });
     console.log("User registered successfully", username, password);
@@ -60,6 +50,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
+// Login route
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -74,23 +65,32 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
+// Write blog route
 app.post("/api/writeBlogs", async (req, res) => {
   console.log("Writing Blog of " + req.body.profile);
-  const { title, author, profile, content, additionalInfo, id } = req.body;
+  const { title, profile, content, additionalInfo, id ,category} = req.body;
   try {
-    const newPost = new Post({
+    const user = await User.findOne({ username: profile });
+
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+    const newPost = new Blog({
       id,
       title,
-      author,
+      author:user._id,
       profile,
       content,
       additionalInfo,
+      category,
     });
 
     await newPost.save();
-    const userUpdate = await UsersInfo.findOneAndUpdate(
-      { username: profile }, // or any unique field for the user
-      { $push: { blogs: id } }, // Push the new blog ID to the blogs array
+
+    // Update the user's blog list with the new blog's ObjectId
+    const userUpdate = await User.findOneAndUpdate(
+      { username: profile },
+      { $push: { blogs: newPost._id } }, // Push the new blog's ObjectId
       { new: true } // Return the updated document
     );
 
@@ -108,10 +108,11 @@ app.post("/api/writeBlogs", async (req, res) => {
   }
 });
 
+// Read single blog route
 app.get("/api/readBlogs/:blogId", async (req, res) => {
   const blogId = req.params.blogId;
   try {
-    const blog = await Post.findOne({ id: blogId });
+    const blog = await Blog.findOne({ id: blogId });
     if (!blog) {
       return res.status(404).send({ message: "Invalid blog id" });
     }
@@ -124,10 +125,11 @@ app.get("/api/readBlogs/:blogId", async (req, res) => {
   }
 });
 
+// Read all blogs route (limited to 10)
 app.get("/api/readBlogs", async (req, res) => {
   try {
     // Retrieve blogs with a limit of 10 documents
-    const blogs = await Post.find().limit(10);
+    const blogs = await Blog.find().limit(10);
 
     // Send the blogs as a response
     res.status(200).send({ blogs });
@@ -139,10 +141,11 @@ app.get("/api/readBlogs", async (req, res) => {
   }
 });
 
+// Get user info by username
 app.get("/api/userInfo/:username", async (req, res) => {
   const username = req.params.username;
   try {
-    const userInfo = await UsersInfo.findOne({ username: username });
+    const userInfo = await User.findOne({ username }).populate("blogs");
     if (!userInfo) {
       return res.status(404).send({ message: "User not found" });
     }
@@ -155,10 +158,11 @@ app.get("/api/userInfo/:username", async (req, res) => {
   }
 });
 
+// Get authors (limited to 10)
 app.get("/api/authors", async (req, res) => {
   try {
-    // Fetch 10 users from UsersInfo collection
-    const authors = await UsersInfo.find({})
+    // Fetch 10 users from User collection
+    const authors = await User.find({})
       .limit(10) // Limit to 10 records
       .exec();
 
@@ -174,7 +178,6 @@ app.get("/api/authors", async (req, res) => {
     });
   }
 });
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
