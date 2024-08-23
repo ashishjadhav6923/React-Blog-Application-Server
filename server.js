@@ -112,7 +112,7 @@ app.post("/api/writeBlogs", async (req, res) => {
 app.get("/api/readBlogs/:blogId", async (req, res) => {
   const blogId = req.params.blogId;
   try {
-    const blog = await Blog.findOne({ id: blogId });
+    const blog = await Blog.findOne({ id: blogId }).populate('author','name');
     if (!blog) {
       return res.status(404).send({ message: "Invalid blog id" });
     }
