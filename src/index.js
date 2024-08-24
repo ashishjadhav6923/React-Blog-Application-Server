@@ -1,20 +1,8 @@
-import express from "express";
-import bodyParser from "body-parser";
-import cors from "cors";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
-dotenv.config();
-const mongoURI = "mongodb://localhost:27017/blogs";
-
-mongoose
-  .connect(mongoURI)
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("Could not connect to MongoDB", err));
-
-const app = express();
-app.use(bodyParser.json());
-app.use(cors());
-app.use(express.static("dist"));
+dotenv.config({path:'./env'});
+import connectDB from "./db/index.js";
+import app from "./app.js";
+connectDB();
 
 // Import new schemas
 import User from "./models/user.model.js"; // User schema
