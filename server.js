@@ -129,7 +129,7 @@ app.get("/api/readBlogs/:blogId", async (req, res) => {
 app.get("/api/readBlogs", async (req, res) => {
   try {
     // Retrieve blogs with a limit of 10 documents
-    const blogs = await Blog.find().limit(10);
+    const blogs = await Blog.find().populate('author','name').limit(10);
 
     // Send the blogs as a response
     res.status(200).send({ blogs });
