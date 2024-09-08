@@ -5,10 +5,10 @@ const mongoURI = `${process.env.MONGODB_URI}/${DB_NAME}`;
 
 const connectDB = async () => {
   try {
-    console.log(mongoURI);
+    console.log("mongoURI : ", mongoURI);
     const connectionInstance = await mongoose.connect(mongoURI);
     console.log(
-      `Connected to DB:${DB_NAME}, DB HOST:`,
+      `Connected to \nDB : ${DB_NAME}, DB HOST :`,
       connectionInstance.connection.host
     );
   } catch (error) {
