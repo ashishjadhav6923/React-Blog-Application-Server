@@ -23,12 +23,12 @@ app.post(
     // Check if the user already exists
     const userExists = await User.findOne({ username });
     if (userExists) {
-      return res.status(400).send({ message: "User already exists" });
+      return res.status(400).send("message: User already exists");
     }
     // Create a new user in the User collection
     const newUser = new User({ username, password, name, profession, email });
     await newUser.save();
-    res.status(201).send({ message: "User registered successfully" });
+    res.status(201).send("message: User registered successfully");
     console.log("User registered successfully", username, password);
   })
 );
