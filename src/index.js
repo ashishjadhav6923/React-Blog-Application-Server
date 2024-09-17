@@ -38,9 +38,13 @@ app.post(
   "/api/login",
   asyncHandler(async (req, res) => {
     const { username, password } = req.body;
-    const user = await User.findOne({ username, password });
+    const user = await User.findOne({ username });
     if (!user) {
-      return res.status(400).send({ message: "Invalid username or password" });
+      return res.status(400).send({ message: "User not found" });
+    }
+    const isMatch = await user.isPasswordCorrect(password);
+    if (!isMatch) {
+      return res.status(400).send({ message: "Invalid credentials" });
     }
     res.send("message: Login successful");
     console.log("Login successful: " + username);
