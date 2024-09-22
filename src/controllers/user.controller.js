@@ -1,7 +1,11 @@
 import Blog from "../models/blog.model.js";
 import User from "../models/user.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const registerUser = asyncHandler(async (req, res) => {
   const { username, password, name, profession, email } = req.body;
   if (!username || !password || !email || !name) {
@@ -13,18 +17,27 @@ const registerUser = asyncHandler(async (req, res) => {
   // Check if the user already exists
   const userExists = await User.findOne({ $or: [{ username }, { email }] });
   if (userExists) {
+    if (req.file) {
+      const filePath = path.join(__dirname, "../..", req.file.path); // Adjust path as needed
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error("Error deleting file:", err);
+        }
+      });
+    }
     return res.status(409).json({
       success: false,
       message: "User with Username or Email already exists",
     });
   }
-
+  console.log("file",req.file);
   const newUser = await User.create({
     username,
     password,
     name,
     profession,
     email,
+    img:req.file ? req.file.path : "",
   });
 
   const createdUser = await User.findById(newUser._id).select(
@@ -40,7 +53,6 @@ const registerUser = asyncHandler(async (req, res) => {
   console.log(
     "User registered success:",
     createdUser.username,
-    createdUser.password
   );
   return res
     .status(201)

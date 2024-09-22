@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { getAuthersList, getBlogs, getUserInfo, loginUser, readBlog, registerUser, writeBlog } from "../controllers/user.controller.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 const userRouter=Router();
 
-userRouter.route("/register").post(registerUser)
+userRouter.route("/register").post(upload.single('img'),registerUser)
 userRouter.route("/login").post(loginUser)
 userRouter.route("/writeBlog").post(writeBlog)
 
