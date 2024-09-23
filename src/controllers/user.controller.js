@@ -30,14 +30,13 @@ const registerUser = asyncHandler(async (req, res) => {
       message: "User with Username or Email already exists",
     });
   }
-  console.log("file",req.file);
   const newUser = await User.create({
     username,
     password,
     name,
     profession,
     email,
-    img:req.file ? req.file.path : "",
+    img:req.file ? `/img/${req.file.filename}` : "",
   });
 
   const createdUser = await User.findById(newUser._id).select(
@@ -54,6 +53,7 @@ const registerUser = asyncHandler(async (req, res) => {
     "User registered success:",
     createdUser.username,
   );
+  console.log("file",req.file);
   return res
     .status(201)
     .send({ success: true, message: "User registered successfully" });
