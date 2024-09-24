@@ -76,9 +76,9 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const writeBlog = asyncHandler(async (req, res) => {
-  console.log("Writing Blog of", req.body.profile);
-  const { title, profile, content, additionalInfo, id, category } = req.body;
-  const user = await User.findOne({ username: profile });
+  console.log("Writing Blog of", req.body.username);
+  const { title, username, content, additionalInfo, id, category } = req.body;
+  const user = await User.findOne({ username: username });
   if (!user) {
     return res.status(404).send({ message: "User not found" });
   }
@@ -86,7 +86,7 @@ const writeBlog = asyncHandler(async (req, res) => {
     id,
     title,
     author: user._id,
-    profile,
+    username,
     content,
     additionalInfo,
     category,
@@ -94,7 +94,7 @@ const writeBlog = asyncHandler(async (req, res) => {
   await newPost.save();
   // Update the user's blog list with the new blog's ObjectId
   const userUpdate = await User.findOneAndUpdate(
-    { username: profile },
+    { username: username },
     { $push: { blogs: newPost._id } }, // Push the new blog's ObjectId
     { new: true } // Return the updated document
   );
