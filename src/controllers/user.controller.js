@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { fileUpload } from "../utils/cloudinaryFileUpload.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const registerUser = asyncHandler(async (req, res) => {
@@ -30,13 +31,22 @@ const registerUser = asyncHandler(async (req, res) => {
       message: "User with Username or Email already exists",
     });
   }
+  console.log("file", req.file);
+  const localFilePath = path.join(
+    __dirname,
+    "../../public/img",
+    req.file.filename
+  );
+  // Call the Cloudinary upload function
+  const cloudnaryResponse = await fileUpload(localFilePath);
+  fs.unlinkSync(localFilePath);
   const newUser = await User.create({
     username,
     password,
     name,
     profession,
     email,
-    img:req.file ? `/img/${req.file.filename}` : "",
+    img: req.file ? cloudnaryResponse.url : "",
   });
 
   const createdUser = await User.findById(newUser._id).select(
@@ -49,11 +59,7 @@ const registerUser = asyncHandler(async (req, res) => {
       message: "Something went wrong while registering, Please try again",
     });
   }
-  console.log(
-    "User registered success:",
-    createdUser.username,
-  );
-  console.log("file",req.file);
+  console.log("User registered success:", createdUser.username);
   return res
     .status(201)
     .send({ success: true, message: "User registered successfully" });
