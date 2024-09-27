@@ -99,6 +99,7 @@ const loginUser = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: false,
     path: "/",
+    sameSite: "None",
   };
 
   console.log("Login successful: " + username);
@@ -128,6 +129,8 @@ const logOutUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV == "dev" ? false : true,
+    sameSite: "None",
+    path: "/",
   };
 
   return res
@@ -139,7 +142,7 @@ const logOutUser = asyncHandler(async (req, res) => {
 
 const writeBlog = asyncHandler(async (req, res) => {
   console.log("Writing Blog of", req.user.username);
-  const username=req.user.username;
+  const username = req.user.username;
   const { title, content, additionalInfo, id, category } = req.body;
   const user = await User.findOne({ username });
   if (!user) {
@@ -154,10 +157,15 @@ const writeBlog = asyncHandler(async (req, res) => {
     additionalInfo,
     category,
   });
-  const saveResponse=await newPost.save();
+  const saveResponse = await newPost.save();
   // Update the user's blog list with the new blog's ObjectId
-  if(!saveResponse){
-    return res.status().json({success:false,message:"Something went wrong while saving blog"})
+  if (!saveResponse) {
+    return res
+      .status()
+      .json({
+        success: false,
+        message: "Something went wrong while saving blog",
+      });
   }
   const userUpdate = await User.findOneAndUpdate(
     { username: username },
