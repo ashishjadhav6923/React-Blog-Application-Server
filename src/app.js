@@ -8,6 +8,14 @@ app.use(
     credentials: true,
   })
 );
+app.options(
+  "*",
+  cors({
+    origin: process.env.CORS_ORIGIN,
+    credentials: true,
+  })
+);
+
 app.use(express.static("dist"));
 app.use(express.static("public"));
 app.use(express.json({ limit: "16kb" }));
