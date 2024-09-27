@@ -5,6 +5,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { fileUpload } from "../utils/cloudinaryFileUpload.js";
+import generateRefreshAccessToken from "../utils/generateJWTtokens.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const registerUser = asyncHandler(async (req, res) => {
@@ -31,15 +32,18 @@ const registerUser = asyncHandler(async (req, res) => {
       message: "User with Username or Email already exists",
     });
   }
-  console.log("file", req.file);
-  const localFilePath = path.join(
-    __dirname,
-    "../../public/img",
-    req.file.filename
-  );
-  // Call the Cloudinary upload function
-  const cloudnaryResponse = await fileUpload(localFilePath);
-  fs.unlinkSync(localFilePath);
+  const cloudnaryResponse = "";
+  if (req.file) {
+    console.log("file", req.file);
+    const localFilePath = path.join(
+      __dirname,
+      "../../public/img",
+      req.file?.filename
+    );
+    // Call the Cloudinary upload function
+    cloudnaryResponse = await fileUpload(localFilePath);
+    fs.unlinkSync(localFilePath);
+  }
   const newUser = await User.create({
     username,
     password,
@@ -59,7 +63,7 @@ const registerUser = asyncHandler(async (req, res) => {
       message: "Something went wrong while registering, Please try again",
     });
   }
-  console.log("User registered success:", createdUser.username);
+  console.log("User registered successfully:", createdUser.username);
   return res
     .status(201)
     .send({ success: true, message: "User registered successfully" });
@@ -67,18 +71,70 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
-  const user = await User.findOne({ $or: [{ username }, { email: username }] });
+
+  if (!username) {
+    res.status(400).json({ success: false, message: "Username is required" });
+  }
+
+  const user = await User.findOne({ username });
   if (!user) {
     return res.status(404).send({ success: false, message: "User not found" });
   }
+
   const isMatch = await user.isPasswordCorrect(password);
   if (!isMatch) {
     return res
       .status(401)
       .send({ success: false, message: "Invalid credentials" });
   }
-  return res.status(200).json({ success: true, message: "Login successful" });
+
+  const { accessToken, refreshToken } = await generateRefreshAccessToken(
+    user._id
+  );
+
+  user.password = "";
+  user.refreshToken = "";
+
+  const options = {
+    httpOnly: true,
+    secure: false,
+    path: "/",
+  };
+
   console.log("Login successful: " + username);
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json({
+      user: user,
+      accessToken,
+      refreshToken,
+      success: true,
+      message: "Login successful",
+    });
+});
+
+const logOutUser = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $unset: {
+        refreshToken: 1,
+      },
+    },
+    { new: true }
+  );
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV == "dev" ? false : true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json({ success: true, message: "User Logged Out Successfully" });
 });
 
 const writeBlog = asyncHandler(async (req, res) => {
@@ -131,7 +187,9 @@ const getUserInfo = asyncHandler(async (req, res) => {
   const username = req.params.username;
   const userInfo = await User.findOne({
     $or: [{ username }, { email: username }],
-  }).populate("blogs");
+  })
+    .populate("blogs")
+    .select("-password -refreshToken");
   if (!userInfo) {
     return res.status(404).send({ message: "User not found" });
   }
@@ -141,6 +199,7 @@ const getUserInfo = asyncHandler(async (req, res) => {
 const getAuthersList = asyncHandler(async (req, res) => {
   // Fetch 10 users from User collection
   const authors = await User.find({})
+    .select("-password -refreshToken")
     .limit(10) // Limit to 10 records
     .exec();
   if (!authors.length) {
@@ -157,4 +216,5 @@ export {
   getBlogs,
   getUserInfo,
   getAuthersList,
+  logOutUser,
 };
