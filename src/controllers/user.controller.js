@@ -98,6 +98,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV == "dev" ? false : true,
+    sameSite: "None",
     path: "/",
   };
 
@@ -128,6 +129,7 @@ const logOutUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV == "dev" ? false : true,
+    sameSite: "None",
     path: "/",
   };
 
