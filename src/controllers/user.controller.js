@@ -158,12 +158,10 @@ const writeBlog = asyncHandler(async (req, res) => {
   const saveResponse = await newPost.save();
   // Update the user's blog list with the new blog's ObjectId
   if (!saveResponse) {
-    return res
-      .status()
-      .json({
-        success: false,
-        message: "Something went wrong while saving blog",
-      });
+    return res.status().json({
+      success: false,
+      message: "Something went wrong while saving blog",
+    });
   }
   const userUpdate = await User.findOneAndUpdate(
     { username: username },
