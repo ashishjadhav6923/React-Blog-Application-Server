@@ -1,5 +1,4 @@
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -7,20 +6,36 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export const fileUpload = async (localFilePath) => {
+/**
+ * Upload file buffer to Cloudinary
+ * @param {Buffer} fileBuffer - The buffer of the file (from multer's memory storage)
+ * @param {String} fileName - The desired name of the file to be uploaded
+ * @returns {Promise<Object>} - The Cloudinary upload response
+ */
+export const fileUpload = async (fileBuffer, fileName) => {
   try {
-    if (!localFilePath) return null;
-    const uploadResponse = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: "auto",
+    if (!fileBuffer) throw new Error("File buffer is required");
+
+    // Use Cloudinary's upload_stream to handle buffer uploads
+    const uploadResponse = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { resource_type: "auto", public_id: fileName },
+        (error, result) => {
+          if (error) {
+            return reject(error);
+          }
+          resolve(result);
+        }
+      );
+      // Write the file buffer to the upload stream
+      uploadStream.end(fileBuffer);
     });
-    console.log("file upload response : ", uploadResponse);
+
+    console.log("File upload response:", uploadResponse);
     return uploadResponse;
   } catch (error) {
-    fs.unlinkSync(localFilePath);
-    console.log(
-      "Something went wrong while uploading file to cloudinary and file is deleted for cleaning : error :",error
-    );
-    return null;
+    console.error("Error uploading file to Cloudinary:", error);
+    throw error;
   }
 };
 

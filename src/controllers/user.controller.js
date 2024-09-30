@@ -8,6 +8,13 @@ import { fileUpload } from "../utils/cloudinaryFileUpload.js";
 import generateRefreshAccessToken from "../utils/generateJWTtokens.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const isProduction = process.env.NODE_ENV !== "dev";
+const options = {
+  httpOnly: true,
+  secure: isProduction, // true in production (HTTPS), false in development (HTTP)
+  sameSite: isProduction ? "None" : "Lax", // 'None' for cross-site requests in production, 'Lax' in development
+  path: "/", // Ensure the cookie is available site-wide
+};
 const registerUser = asyncHandler(async (req, res) => {
   const { username, password, name, profession, email } = req.body;
   if (!username || !password || !email || !name) {
@@ -19,30 +26,19 @@ const registerUser = asyncHandler(async (req, res) => {
   // Check if the user already exists
   const userExists = await User.findOne({ $or: [{ username }, { email }] });
   if (userExists) {
-    if (req.file) {
-      const filePath = path.join(__dirname, "../..", req.file.path); // Adjust path as needed
-      fs.unlink(filePath, (err) => {
-        if (err) {
-          console.error("Error deleting file:", err);
-        }
-      });
-    }
     return res.status(409).json({
       success: false,
       message: "User with Username or Email already exists",
     });
   }
-  const cloudnaryResponse = "";
+  let cloudnaryResponse = "";
   if (req.file) {
+    const fileName = path.basename(req.file.originalname, path.extname(req.file.originalname));
+    const uniqueFileName = `${fileName}-${Date.now()}`;
     console.log("file", req.file);
-    const localFilePath = path.join(
-      __dirname,
-      "../../public/img",
-      req.file?.filename
-    );
     // Call the Cloudinary upload function
-    cloudnaryResponse = await fileUpload(localFilePath);
-    fs.unlinkSync(localFilePath);
+    cloudnaryResponse = await fileUpload(req.file.buffer, uniqueFileName);
+    console.log("cloudnaryResponse : ",cloudnaryResponse);
   }
   const newUser = await User.create({
     username,
@@ -50,7 +46,7 @@ const registerUser = asyncHandler(async (req, res) => {
     name,
     profession,
     email,
-    img: req.file ? cloudnaryResponse.url : "",
+    img: req.file ? cloudnaryResponse.secure_url : "",
   });
 
   const createdUser = await User.findById(newUser._id).select(
@@ -95,13 +91,6 @@ const loginUser = asyncHandler(async (req, res) => {
   user.password = "";
   user.refreshToken = "";
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV == "dev" ? false : true,
-    sameSite: "None",
-    path: "/",
-  };
-
   console.log("Login successful: " + username);
   return res
     .status(200)
@@ -126,12 +115,6 @@ const logOutUser = asyncHandler(async (req, res) => {
     },
     { new: true }
   );
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV == "dev" ? false : true,
-    sameSite: "None",
-    path: "/",
-  };
 
   return res
     .status(200)
