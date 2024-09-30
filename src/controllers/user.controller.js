@@ -33,12 +33,15 @@ const registerUser = asyncHandler(async (req, res) => {
   }
   let cloudnaryResponse = "";
   if (req.file) {
-    const fileName = path.basename(req.file.originalname, path.extname(req.file.originalname));
+    const fileName = path.basename(
+      req.file.originalname,
+      path.extname(req.file.originalname)
+    );
     const uniqueFileName = `${fileName}-${Date.now()}`;
     console.log("file", req.file);
     // Call the Cloudinary upload function
     cloudnaryResponse = await fileUpload(req.file.buffer, uniqueFileName);
-    console.log("cloudnaryResponse : ",cloudnaryResponse);
+    console.log("cloudnaryResponse : ", cloudnaryResponse);
   }
   const newUser = await User.create({
     username,
@@ -103,6 +106,24 @@ const loginUser = asyncHandler(async (req, res) => {
       success: true,
       message: "Login successful",
     });
+});
+
+const loginUserWithJWT = asyncHandler(async (req, res) => {
+  const username = req.user.username;
+
+  const userDB = await User.findOne({ username });
+  if (!userDB) {
+    return res.status(404).send({ success: false, message: "User not found" });
+  }
+
+  console.log("Login with JWT successful: " + username);
+  userDB.password = "";
+  userDB.refreshToken = "";
+  return res.status(200).json({
+    user: userDB,
+    success: true,
+    message: "Login with JWT successful",
+  });
 });
 
 const logOutUser = asyncHandler(async (req, res) => {
@@ -210,4 +231,5 @@ export {
   getUserInfo,
   getAuthersList,
   logOutUser,
+  loginUserWithJWT,
 };

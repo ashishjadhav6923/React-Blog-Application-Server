@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAuthersList, getBlogs, getUserInfo, loginUser, logOutUser, readBlog, registerUser, writeBlog } from "../controllers/user.controller.js";
+import { getAuthersList, getBlogs, getUserInfo, loginUser, loginUserWithJWT, logOutUser, readBlog, registerUser, writeBlog } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import verifyJWT from "../middlewares/auth.middleware.js";
 
@@ -9,6 +9,7 @@ userRouter.route("/register").post(upload.single('img'),registerUser)
 userRouter.route("/login").post(loginUser)
 userRouter.route("/writeBlog").post(verifyJWT,writeBlog)
 userRouter.route("/logout").post(verifyJWT,logOutUser)
+userRouter.route("/loginWithJWT").post(verifyJWT,loginUserWithJWT)
 
 userRouter.route("/readBlog/:blogId").get(readBlog)
 userRouter.route("/getBlogs").get(getBlogs)
