@@ -200,7 +200,7 @@ const getBlogs = asyncHandler(async (req, res) => {
 const getUserInfo = asyncHandler(async (req, res) => {
   const username = req.params.username;
   const userInfo = await User.findOne({
-    $or: [{ username }, { email: username }],
+    $or: [{ username }],
   })
     .populate("blogs")
     .select("-password -refreshToken");
@@ -213,7 +213,7 @@ const getUserInfo = asyncHandler(async (req, res) => {
 const getAuthersList = asyncHandler(async (req, res) => {
   // Fetch 10 users from User collection
   const authors = await User.find({})
-    .select("-password -refreshToken")
+    .select("name username profession img blogs")
     .limit(10) // Limit to 10 records
     .exec();
   if (!authors.length) {
