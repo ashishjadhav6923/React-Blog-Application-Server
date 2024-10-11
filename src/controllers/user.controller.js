@@ -222,6 +222,20 @@ const getAuthersList = asyncHandler(async (req, res) => {
   return res.status(200).send({ authors });
 });
 
+const getAutherBlogsList = asyncHandler(async (req, res) => {
+  const username = req.params.username;
+  const blogs = await Blog.find({ username: username }).populate("author", "name");
+  if (!blogs) {
+    return res
+      .status(404)
+      .send({
+        success: false,
+        message: `Problem occured while accessing blogs of ${username}`,
+      });
+  }
+  res.status(200).send({blogs})
+});
+
 export {
   registerUser,
   loginUser,
@@ -232,4 +246,5 @@ export {
   getAuthersList,
   logOutUser,
   loginUserWithJWT,
+  getAutherBlogsList,
 };
