@@ -224,16 +224,109 @@ const getAuthersList = asyncHandler(async (req, res) => {
 
 const getAutherBlogsList = asyncHandler(async (req, res) => {
   const username = req.params.username;
-  const blogs = await Blog.find({ username: username }).populate("author", "name");
+  const blogs = await Blog.find({ username: username }).populate(
+    "author",
+    "name"
+  );
   if (!blogs) {
+    return res.status(404).send({
+      success: false,
+      message: `Problem occured while accessing blogs of ${username}`,
+    });
+  }
+  res.status(200).send({ blogs });
+});
+
+const rateUser = asyncHandler(async (req, res) => {
+  const { username, raterUsername, rating, message } = req.body;
+  if (rating < 1 || rating > 5) {
+    return res.status(400).send({
+      success: false,
+      message: "Rating must be between 1 and 5",
+    });
+  }
+  const user = await User.findOne({ username: username });
+  if (!user) {
+    return res.status(404).send({ success: false, message: "User not found" });
+  }
+
+  const raterUser = await User.findOne({ username: raterUsername });
+  if (!raterUser) {
     return res
       .status(404)
-      .send({
-        success: false,
-        message: `Problem occured while accessing blogs of ${username}`,
-      });
+      .send({ success: false, message: "You dont have valid account" });
   }
-  res.status(200).send({blogs})
+
+  const existingRating = user.ratings.find((ratingObj) => {
+    return ratingObj.raterID.toString() === raterUser._id.toString();
+  });
+  if (existingRating) {
+    return res.status(400).send({
+      success: false,
+      message: "You have already rated this user",
+    });
+  }
+
+  user.ratings.push({ raterID: raterUser._id, rating, message });
+
+  const response = await user.save();
+  if (!response) {
+    return res.status(500).send({
+      success: false,
+      message: "Something went wrong while rating user",
+    });
+  }
+
+  return res.status(201).send({
+    success: true,
+    message: "Rating submitted successfully",
+  });
+});
+
+const rateBlog = asyncHandler(async (req, res) => {
+  const { id, raterUsername, rating, message } = req.body;
+  if (rating < 1 || rating > 5) {
+    return res.status(400).send({
+      success: false,
+      message: "Rating must be between 1 and 5",
+    });
+  }
+  const blog = await Blog.findOne({ id: id });
+  if (!blog) {
+    return res.status(404).send({ success: false, message: "Blog not found" });
+  }
+
+  const raterUser = await User.findOne({ username: raterUsername });
+  if (!raterUser) {
+    return res
+      .status(404)
+      .send({ success: false, message: "You dont have valid account" });
+  }
+
+  const existingRating = blog.ratings.find((ratingObj) => {
+    return ratingObj.raterID.toString() === raterUser._id.toString();
+  });
+  if (existingRating) {
+    return res.status(400).send({
+      success: false,
+      message: "You have already rated this blog",
+    });
+  }
+
+  blog.ratings.push({ raterID: raterUser._id, rating, message });
+
+  const response = await blog.save();
+  if (!response) {
+    return res.status(500).send({
+      success: false,
+      message: "Something went wrong while rating blog",
+    });
+  }
+
+  return res.status(200).send({
+    success: true,
+    message: "Rating submitted successfully",
+  });
 });
 
 export {
@@ -247,4 +340,6 @@ export {
   logOutUser,
   loginUserWithJWT,
   getAutherBlogsList,
+  rateUser,
+  rateBlog,
 };

@@ -10,6 +10,14 @@ const userSchema = new mongoose.Schema(
     profession: { type: String, required: false },
     img: { type: String, default: "" }, // URL to profile image
     blogs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Blog" }], // References to Blog documents
+    ratings: [
+      {
+        raterID: { type: mongoose.Schema.Types.ObjectId },
+        message: { type: String },
+        rating: { type: Number },
+      },
+    ],
+    averageRating: { type: Number, default: 0 },
     refreshToken: { type: String },
   },
   { timestamps: true } // Automatically adds createdAt and updatedAt fields
@@ -21,6 +29,18 @@ userSchema.pre("save", async function (next) {
 
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(user.password, salt);
+
+  next();
+});
+
+userSchema.pre("save", function (next) {
+  const user = this;
+  if (!this.isModified("ratings")) return next();
+
+  const sum = user.ratings.reduce((acc, obj) => {
+    return acc + obj.rating;
+  }, 0);
+  user.averageRating = user.ratings.length ? sum / user.ratings.length : 0;
 
   next();
 });
