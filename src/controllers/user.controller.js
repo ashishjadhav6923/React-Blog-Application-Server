@@ -320,8 +320,15 @@ const rateBlog = asyncHandler(async (req, res) => {
       message: "You have already rated this blog",
     });
   }
-
-  blog.ratings.push({ raterID: raterUser._id, rating, message });
+  const raterName = raterUser.name;
+  const raterImg = raterUser.img;
+  blog.ratings.push({
+    raterID: raterUser._id,
+    rating,
+    message,
+    raterName,
+    raterImg,
+  });
 
   const response = await blog.save();
   if (!response) {
@@ -331,7 +338,7 @@ const rateBlog = asyncHandler(async (req, res) => {
     });
   }
 
-  return res.status(200).send({
+  return res.status(201).send({
     success: true,
     message: "Rating submitted successfully",
   });
