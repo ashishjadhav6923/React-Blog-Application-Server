@@ -267,7 +267,15 @@ const rateUser = asyncHandler(async (req, res) => {
     });
   }
 
-  user.ratings.push({ raterID: raterUser._id, rating, message });
+  const raterName = raterUser.name;
+  const raterImg = raterUser.img;
+  user.ratings.push({
+    raterID: raterUser._id,
+    rating,
+    message,
+    raterName,
+    raterImg,
+  });
 
   const response = await user.save();
   if (!response) {

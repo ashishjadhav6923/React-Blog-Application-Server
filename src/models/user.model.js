@@ -12,9 +12,11 @@ const userSchema = new mongoose.Schema(
     blogs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Blog" }], // References to Blog documents
     ratings: [
       {
+        raterName: { type: String },
         raterID: { type: mongoose.Schema.Types.ObjectId },
         message: { type: String },
         rating: { type: Number },
+        raterImg: { type: String },
       },
     ],
     averageRating: { type: Number, default: 0 },
