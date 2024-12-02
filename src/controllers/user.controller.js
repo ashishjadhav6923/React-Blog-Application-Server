@@ -344,6 +344,31 @@ const rateBlog = asyncHandler(async (req, res) => {
   });
 });
 
+const getAuthersListByCategory = asyncHandler(async (req, res) => {
+  const category = req.params.category;
+  if (!category) {
+    return res
+      .status(404)
+      .send({ success: false, message: "Please provide Category" });
+  }
+
+  const authors = await User.find({ profession: category });
+  if (!authors.length) {
+    return res.status(204).send({
+      success: false,
+      message: `Authors with profession ${category} not found`,
+    });
+  }
+
+  return res
+    .status(200)
+    .send({
+      authors,
+      success: true,
+      message: `Authors with profession ${category} found`,
+    });
+});
+
 export {
   registerUser,
   loginUser,
@@ -357,4 +382,5 @@ export {
   getAutherBlogsList,
   rateUser,
   rateBlog,
+  getAuthersListByCategory,
 };

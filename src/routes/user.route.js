@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAutherBlogsList, getAuthersList, getBlogs, getUserInfo, loginUser, loginUserWithJWT, logOutUser, rateBlog, rateUser, readBlog, registerUser, writeBlog } from "../controllers/user.controller.js";
+import { getAutherBlogsList, getAuthersList, getAuthersListByCategory, getBlogs, getUserInfo, loginUser, loginUserWithJWT, logOutUser, rateBlog, rateUser, readBlog, registerUser, writeBlog } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import verifyJWT from "../middlewares/auth.middleware.js";
 
@@ -17,6 +17,7 @@ userRouter.route("/readBlog/:blogId").get(readBlog)
 userRouter.route("/getBlogs").get(getBlogs)
 userRouter.route("/userInfo/:username").get(getUserInfo)
 userRouter.route("/authors").get(getAuthersList)
+userRouter.route("/authors/:category").get(getAuthersListByCategory)
 userRouter.route("/blogs/:username").get(getAutherBlogsList)
 
 
