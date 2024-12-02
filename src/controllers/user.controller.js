@@ -213,7 +213,7 @@ const getUserInfo = asyncHandler(async (req, res) => {
 const getAuthersList = asyncHandler(async (req, res) => {
   // Fetch 10 users from User collection
   const authors = await User.find({})
-    .select("name username profession img blogs")
+    .select("name username profession img blogs averageRating")
     .limit(10) // Limit to 10 records
     .exec();
   if (!authors.length) {
@@ -360,13 +360,34 @@ const getAuthersListByCategory = asyncHandler(async (req, res) => {
     });
   }
 
-  return res
-    .status(200)
-    .send({
-      authors,
-      success: true,
-      message: `Authors with profession ${category} found`,
+  return res.status(200).send({
+    authors,
+    success: true,
+    message: `Authors with profession ${category} found`,
+  });
+});
+
+const getBlogsListByCategory = asyncHandler(async (req, res) => {
+  const category = req.params.category;
+  if (!category) {
+    return res
+      .status(404)
+      .send({ success: false, message: "Please provide Category" });
+  }
+
+  const blogs = await Blog.find({ category: category });
+  if (!blogs.length) {
+    return res.status(204).send({
+      success: false,
+      message: `Authors with profession ${category} not found`,
     });
+  }
+
+  return res.status(200).send({
+    blogs,
+    success: true,
+    message: `Authors with profession ${category} found`,
+  });
 });
 
 export {
@@ -383,4 +404,5 @@ export {
   rateUser,
   rateBlog,
   getAuthersListByCategory,
+  getBlogsListByCategory,
 };
